@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>התפלגות נורמלית</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --ink:#14213d; --muted:#5b6780; --line:#c9d2de;
+  --curve:#1f4fb8; --mu:#c2185b; --accent:#e89a00; --accent-ink:#7a4f00; --accent-fill:#ffc94d;
+  --seg0:#c6d7f4; --seg1:#d6e2f7; --seg2:#e4ecf9; --seg3:#eef3fb;
+  --chip:#e6ecf4; --given:#1f4fb8; --diag:#d9f0e3; --diag-ink:#17663d;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161f; --surface:#18212d; --ink:#e8edf5; --muted:#9aa8bd; --line:#2d3a4c;
+    --curve:#7fa8ff; --mu:#ff6fa3; --accent:#ffb627; --accent-ink:#ffd27a; --accent-fill:#b37a00;
+    --seg0:#2a4378; --seg1:#233761; --seg2:#1d2d4d; --seg3:#19263f; --chip:#223044; --given:#9dbbff;
+    --diag:#1d4630; --diag-ink:#8fe0b2;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161f; --surface:#18212d; --ink:#e8edf5; --muted:#9aa8bd; --line:#2d3a4c;
+  --curve:#7fa8ff; --mu:#ff6fa3; --accent:#ffb627; --accent-ink:#ffd27a; --accent-fill:#b37a00;
+  --seg0:#2a4378; --seg1:#233761; --seg2:#1d2d4d; --seg3:#19263f; --chip:#223044; --given:#9dbbff;
+  --diag:#1d4630; --diag-ink:#8fe0b2;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Rubik","Assistant","Segoe UI",Arial,sans-serif;font-size:17px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+.math{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.xbar{text-decoration:overline;text-decoration-thickness:2px}
+
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;flex-wrap:wrap}
+h1{margin:0;font-size:1.5rem;font-weight:700;letter-spacing:-.01em}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tools{display:flex;gap:6px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:42px;height:42px;cursor:pointer;font-size:1.1rem}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+main{display:grid;grid-template-columns:minmax(300px,360px) 1fr;gap:16px;padding:0 20px 20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h2{margin:0 0 8px;font-size:1.1rem}
+.chart-wrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 8px 10px}
+.chart-inner{position:relative}
+svg#chart{width:100%;height:auto;display:block;direction:ltr;touch-action:none;user-select:none;cursor:crosshair}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel h2{margin:0;font-size:1.05rem}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
+legend{padding:0 6px;color:var(--muted);font-size:.9rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label.f{display:flex;flex-direction:column;gap:2px;font-size:.88rem;color:var(--muted)}
+label.f input,label.f select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);color:var(--ink);font-size:1rem;width:100%}
+input.num{direction:ltr;text-align:right}
+.chk{display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0}
+.chk input{width:20px;height:20px;accent-color:var(--curve)}
+.big{font-size:2.6rem;font-weight:700;line-height:1.1;color:var(--accent-ink)}
+.result{background:var(--chip);border-radius:12px;padding:12px}
+.result p{margin:4px 0}
+.muted{color:var(--muted);font-size:.92rem}
+.warn{color:var(--mu);font-size:.95rem;margin:6px 0}
+.ok{color:var(--diag-ink);font-weight:700;margin:6px 0}
+.formula{direction:ltr;unicode-bidi:isolate;display:flex;align-items:center;justify-content:center;gap:6px;font-size:1.15rem;flex-wrap:wrap;padding:4px 0}
+.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;vertical-align:middle;margin:0 2px}
+.frac>span:first-child{border-bottom:2px solid currentColor;padding:0 6px 3px}
+.frac>span:last-child{padding-top:3px}
+.quick{display:flex;flex-wrap:wrap;gap:6px}
+.quick button,.btn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;cursor:pointer}
+[hidden]{display:none!important}
+ul.facts{margin:0;padding-inline-start:18px}
+.steps .step{direction:ltr;unicode-bidi:isolate;text-align:center;font-size:1.2rem;margin:8px 0;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}
+.steps .heb{margin:6px 0;color:var(--muted);font-size:.95rem}
+.steps b{color:var(--accent-ink)}
+
+/* rows under the chart, aligned to the ticks */
+.trow{position:relative;height:44px}
+.trow .cell{position:absolute;top:3px;width:6.1%;transform:translateX(-50%);text-align:center;direction:ltr}
+.trow input.cell{height:38px;border:2px dashed var(--line);border-radius:8px;background:var(--bg);color:var(--muted);
+  font-size:clamp(13px,1.35vw,20px);font-weight:500;padding:0 2px}
+.trow input.cell.given{border:2px solid var(--given);color:var(--ink);font-weight:700;background:var(--surface)}
+.trow input.cell::placeholder{color:var(--line)}
+.trow span.cell{line-height:38px;font-size:clamp(13px,1.3vw,19px);color:var(--muted)}
+.trow .rlabel{position:absolute;right:0;top:3px;line-height:38px;font-size:clamp(12px,1.1vw,16px);color:var(--muted);width:8.5%;text-align:center}
+.trow.zrow span.cell{color:var(--curve);font-weight:700}
+.trow.arow span.cell{color:var(--mu)}
+
+/* z formula with boxes */
+.zcalc{direction:ltr;unicode-bidi:isolate;display:flex;align-items:center;justify-content:center;gap:10px;font-size:1.6rem;padding:6px 0}
+.zcalc .frac>span:first-child{display:flex;align-items:center;gap:8px;padding-bottom:6px;border-bottom-width:3px}
+.zcalc .frac>span:last-child{padding-top:6px}
+.box{width:96px;height:48px;border:2px solid var(--line);border-radius:10px;background:var(--bg);text-align:center;font-size:1.35rem;font-weight:700;direction:ltr;color:var(--ink)}
+.box::placeholder{color:var(--muted);font-weight:400}
+.box.solved::placeholder{color:var(--accent-ink);font-weight:700;opacity:1}
+.box.solved{border:2px dashed var(--accent)}
+.box.filled{border-color:var(--given)}
+
+/* magic square */
+.square{display:grid;grid-template-columns:1fr 1fr;gap:0;border:3px solid var(--ink);border-radius:10px;overflow:hidden;max-width:360px;margin:6px auto;position:relative}
+.square>div{border:1px solid var(--line);padding:8px;display:flex;align-items:center;justify-content:center;gap:4px;min-height:58px;font-size:1.3rem;font-weight:700;direction:ltr}
+.square .hd{background:var(--chip);font-size:1rem;font-weight:500;min-height:40px;direction:rtl}
+.square .diag{background:var(--diag);color:var(--diag-ink)}
+.square .unknown{background:var(--accent-fill)}
+.square .divc{outline:3px dashed var(--accent);outline-offset:-6px}
+.square .box{width:88px;height:42px;font-size:1.2rem}
+.legend-sq{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.legend-sq span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:5px;vertical-align:-1px}
+.legend-sq .l1::before{background:var(--diag)} .legend-sq .l2::before{outline:2px dashed var(--accent);outline-offset:-2px} .legend-sq .l3::before{background:var(--accent-fill)}
+
+@media (max-width:1150px){ .tools-grid{grid-template-columns:1fr} }
+@media (max-width:860px){ main{grid-template-columns:1fr} .col{order:-1} }
+</style>
+</head>
+<body>
+<header>
+  <h1>התפלגות נורמלית</h1>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-screen="table">חלוקה לפי הטבלה</button>
+    <button class="tab" role="tab" data-screen="sym">סימטריה (25%, 33%…)</button>
+  </nav>
+  <div class="tools">
+    <button class="icon-btn" id="themeBtn" title="מצב בהיר / כהה" aria-label="מצב בהיר או כהה">◐</button>
+    <button class="icon-btn" id="fsBtn" title="מסך מלא" aria-label="מסך מלא">⛶</button>
+  </div>
+</header>
+
+<main>
+  <aside class="panel">
+    <!-- ======== table screen panel ======== -->
+    <div data-for="table" class="col" style="gap:14px">
+      <fieldset>
+        <legend>נתוני השאלה</legend>
+        <label class="f" style="margin-bottom:8px">דוגמה מוכנה
+          <select id="preset">
+            <option value="">— בחרו או מלאו בעצמכם —</option>
+            <option value="0">ממוצע וסטיית תקן (גובה)</option>
+            <option value="1">אחוז מתחת לערך + סטיית תקן (ציון)</option>
+            <option value="2">שני ערכים — מוצאים S (משקל)</option>
+          </select>
+        </label>
+        <div class="grid2">
+          <label class="f">מה מודדים?<input id="inLabel" type="text"></label>
+          <label class="f">יחידות<input id="inUnit" type="text"></label>
+          <label class="f"><span>ממוצע <span class="math"><span class="xbar">x</span></span></span><input id="inMean" class="num" type="text" inputmode="decimal"></label>
+          <label class="f"><span>סטיית תקן <span class="math">S</span></span><input id="inS" class="num" type="text" inputmode="decimal"></label>
+        </div>
+        <p class="muted" style="margin:8px 0 0">אפשר לכתוב ערכים גם ישירות בשורה שמתחת לגרף.</p>
+        <button class="btn" id="clearData" style="margin-top:6px">ניקוי כל הנתונים</button>
+      </fieldset>
+    </div>
+
+    <!-- ======== sym screen panel ======== -->
+    <div data-for="sym" class="col" style="gap:14px">
+      <fieldset>
+        <legend>חלוקה סימטרית</legend>
+        <label class="f">כמה אחוזים בכל קצה?
+          <input id="symP" class="num" type="text" inputmode="decimal">
+        </label>
+        <input type="range" id="symRange" min="1" max="49" step="1" style="width:100%;direction:ltr;accent-color:var(--accent)" aria-label="אחוז בכל קצה">
+        <div class="quick">
+          <button data-p="10">10%</button><button data-p="16">16%</button><button data-p="20">20%</button>
+          <button data-p="25">25%</button><button data-p="30">30%</button><button data-p="33">33%</button>
+        </div>
+        <div class="grid2" style="margin-top:8px">
+          <label class="f">מה מודדים?<input id="symLabel" type="text"></label>
+          <label class="f">יחידות<input id="symUnit" type="text"></label>
+        </div>
+        <p class="muted" style="margin:8px 0 0">כתבו שניים מתוך שלושת הערכים בשורה שמתחת לגרף.</p>
+        <button class="btn" id="symClear" style="margin-top:6px">ניקוי ערכים</button>
+      </fieldset>
+    </div>
+
+    <fieldset>
+      <legend>תצוגה</legend>
+      <label class="chk"><input type="checkbox" id="cPct" checked>הצג אחוזים על הגרף</label>
+      <label class="chk"><input type="checkbox" id="cComp" checked>הצג ערכים מחושבים</label>
+      <div data-for="table">
+        <label class="chk"><input type="checkbox" id="cZrow">שורת ציון תקן <span class="math">z</span></label>
+        <label class="chk"><input type="checkbox" id="cBrow">שורת אחוז מתחת</label>
+        <label class="chk"><input type="checkbox" id="cArow">שורת אחוז מעל</label>
+      </div>
+    </fieldset>
+
+    <section class="result">
+      <h2 style="margin-bottom:4px">הסימון בגרף</h2>
+      <p class="muted" id="selHint">לחצו על אזור כדי לסמן אותו, או לחצו על קו וגררו עד קו אחר או עד הקצה.</p>
+      <p id="selQ" style="font-weight:500"></p>
+      <div class="formula" id="selZ"></div>
+      <div class="formula" id="selBreak"></div>
+      <div class="big" style="text-align:center"><span class="math" id="selSum"></span></div>
+      <div class="quick" style="justify-content:center;margin-top:8px"><button id="selClear">ניקוי סימון</button></div>
+    </section>
+
+    <details class="result steps" id="solBox" open>
+      <summary style="cursor:pointer;font-weight:500">הפתרון לפי הנתונים</summary>
+      <div id="sol"></div>
+    </details>
+  </aside>
+
+  <div class="col">
+    <div class="chart-wrap">
+      <div class="chart-inner">
+        <svg id="chart" viewBox="0 0 1000 412" role="img" aria-label="עקומת התפלגות נורמלית"></svg>
+        <div data-for="table">
+          <div class="trow xrow" id="xrow"><span class="rlabel">ערכים</span></div>
+          <div class="trow zrow" id="zrow"><span class="rlabel">ציון תקן z</span></div>
+          <div class="trow brow" id="brow"><span class="rlabel">% מתחת</span></div>
+          <div class="trow arow" id="arow"><span class="rlabel">% מעל</span></div>
+        </div>
+        <div data-for="sym">
+          <div class="trow xrow" id="symrow"><span class="rlabel">ערכים</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tools-grid">
+      <section class="card" data-for="table">
+        <h2>נוסחת ציון התקן</h2>
+        <p class="muted" style="margin:0">מלאו שלושה מתוך ארבעה — הרביעי יחושב עם כל הדרך.</p>
+        <div class="zcalc">
+          <input class="box" id="cz" placeholder="z" inputmode="decimal" aria-label="z">
+          <span>=</span>
+          <span class="frac">
+            <span><input class="box" id="cx" placeholder="x" inputmode="decimal" aria-label="x"><span>−</span><input class="box" id="cm" placeholder="x̄" inputmode="decimal" aria-label="ממוצע"></span>
+            <span><input class="box" id="cs" placeholder="S" inputmode="decimal" aria-label="סטיית תקן"></span>
+          </span>
+        </div>
+        <div class="quick" style="justify-content:center">
+          <button id="cFill">ממוצע ו־S מהשאלה</button>
+          <button id="cClear">ניקוי</button>
+        </div>
+        <div class="steps" id="cSteps"></div>
+      </section>
+
+      <section class="card">
+        <h2>ריבוע הקסם</h2>
+        <p class="muted" style="margin:0">מלאו שניים מהשלושה — השלישי יחושב בכפל באלכסון.</p>
+        <div class="square" id="square">
+          <div class="hd">אחוזים</div><div class="hd">כמות</div>
+          <div id="q100">100%</div><div id="qN"><input class="box" id="sN" inputmode="decimal" aria-label="כמות כוללת"></div>
+          <div id="qP"><input class="box" id="sP" inputmode="decimal" aria-label="אחוז"><span>%</span></div><div id="qK"><input class="box" id="sK" inputmode="decimal" aria-label="כמות"></div>
+        </div>
+        <div class="legend-sq"><span class="l1">האלכסון שכופלים</span><span class="l2">מחלקים בו</span><span class="l3">הנעלם</span></div>
+        <div class="quick" style="justify-content:center;margin-top:8px">
+          <button id="sFromSel">האחוז מהסימון</button>
+          <button id="sClear">ניקוי</button>
+        </div>
+        <div class="steps" id="sSteps"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- the table as taught (3 יח"ל) ---------- */
+const HALFP = [19, 15, 9, 5, 1.5, 0.5];                              // from the mean outwards, every half S
+const CUM   = [0, 0.5, 2, 7, 16, 31, 50, 69, 84, 93, 98, 99.5, 100];   // % below, z = -3..3 by 0.5
+const PRESETS = [
+  {label:"גובה", unit:"ס״מ", S:8, given:[[0,170]]},
+  {label:"ציון", unit:"נקודות", S:10, given:[[1,75]]},
+  {label:"משקל", unit:"גרם", S:0, given:[[-2,130],[2,170]]}
+];
+
+const S = {
+  screen:"table", label:"גובה", unit:"ס״מ",
+  Sgiven:8, given:new Map([[0,170]]),
+  showPct:true, showComp:true, rowZ:false, rowB:false, rowA:false,
+  sel:new Set(), focusK:2,
+  symP:25, symLabel:"ציון", symUnit:"נקודות", symGiven:{a:60,m:null,b:80}, symSel:new Set()
+};
+
+/* ---------- geometry ---------- */
+const X0=40, X1=960, BASE=395, H=320, ZMAX=3.6;
+const zx = z => X0 + (z+ZMAX)/(2*ZMAX)*(X1-X0);
+const f  = z => Math.exp(-z*z/2);
+const zy = z => BASE - H*f(z);
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const MINUS = "\u2212";
+function fmt(v, d=2){
+  if(v===null || v===undefined || !isFinite(v)) return "";
+  let r = Math.round(v*Math.pow(10,d))/Math.pow(10,d);
+  if(Object.is(r,-0)) r=0;
+  return String(r).replace("-", MINUS);
+}
+const par = v => v<0 ? "("+fmt(v)+")" : fmt(v);
+const pct = v => fmt(v)+"%";
+const parseNum = s => { s=String(s).trim().replace(/\u2212/g,"-").replace(",","."); if(s==="") return null; const v=Number(s); return isFinite(v)?v:NaN; };
+const plain = v => fmt(v).replace(MINUS,"-");
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const XB = '<span class="xbar">x</span>';
+const fr = (t,b) => `<span class="frac"><span>${t}</span><span>${b}</span></span>`;
+const step = h => `<div class="step">${h}</div>`;
+const heb = t => `<div class="heb">${t}</div>`;
+const near = (a,b) => Math.abs(a-b) <= 1e-7*Math.max(1,Math.abs(a),Math.abs(b));
+const unitOf = () => S.screen==="sym" ? S.symUnit : S.unit;
+const u = () => unitOf() ? " "+unitOf() : "";
+
+function erf(x){ const t=1/(1+0.3275911*Math.abs(x));
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+  return x>=0?y:-y; }
+const Phi = z => 0.5*(1+erf(z/Math.SQRT2));
+function invPhi(q){ let lo=-6, hi=6; for(let i=0;i<70;i++){ const m=(lo+hi)/2; if(Phi(m)<q) lo=m; else hi=m; } return (lo+hi)/2; }
+
+/* ---------- solving the table-screen data ---------- */
+let SOL={ok:false};
+function solve(){
+  const pts=[...S.given.entries()].map(([k,v])=>({k,z:k/2,v})).sort((a,b)=>a.z-b.z);
+  const r={ok:false, kind:"missing", pts, warn:""};
+  if(pts.length>=2){
+    const p1=pts[0], p2=pts[pts.length-1], sg=(p2.v-p1.v)/(p2.z-p1.z);
+    r.kind="two"; r.p1=p1; r.p2=p2;
+    if(!(sg>0)){ r.warn="הערך הימני צריך להיות גדול מהערך השמאלי."; return r; }
+    r.sigma=sg; r.mean=p1.v-p1.z*sg; r.ok=true;
+    if(pts.some(p=>!near(r.mean+p.z*sg,p.v))) r.warn="יש יותר משני ערכים והם לא מתאימים זה לזה. החישוב לפי הערך השמאלי והימני.";
+    else if(S.Sgiven>0 && !near(S.Sgiven,sg)) r.warn="סטיית התקן שהוזנה לא מתאימה לשני הערכים — נלקחה סטיית התקן המחושבת.";
+    return r;
+  }
+  if(pts.length===1 && S.Sgiven>0){
+    const p=pts[0];
+    Object.assign(r,{ok:true, sigma:S.Sgiven, mean:p.v-p.z*S.Sgiven, p, kind:p.k===0?"meanS":"oneS"});
+  }
+  return r;
+}
+const valAt = z => SOL.ok ? SOL.mean + z*SOL.sigma : null;
+
+/* ---------- segments (table screen) ---------- */
+function segments(){
+  const out=[];
+  for(let k=-6;k<=5;k++){ const i=k>=0?k:-k-1; out.push({key:"s"+k, k, a:k/2, b:(k+1)/2, pct:HALFP[i], i}); }
+  return out;
+}
+function areaPath(a,b){
+  a=Math.max(a,-ZMAX); b=Math.min(b,ZMAX);
+  const n=Math.max(4,Math.ceil((b-a)*40));
+  let d=`M${zx(a).toFixed(1)},${BASE}`;
+  for(let s=0;s<=n;s++){ const z=a+(b-a)*s/n; d+=`L${zx(z).toFixed(1)},${zy(z).toFixed(1)}`; }
+  return d+`L${zx(b).toFixed(1)},${BASE}Z`;
+}
+
+/* selection summary for the table screen */
+function selInfo(){
+  const segs=segments().filter(s=>S.sel.has(s.key)).sort((a,b)=>a.a-b.a);
+  if(!segs.length) return null;
+  const contiguous = segs.every((s,i)=>i===0 || near(segs[i-1].b, s.a));
+  const t = s => ({t:pct(s.pct), v:s.pct});
+  let terms;
+  const a=segs[0].a, b=segs[segs.length-1].b;
+  if(contiguous && a===-3 && b>=0 && b<3)       terms=[{t:"50%",v:50}].concat(segs.filter(s=>s.a>=0).map(t));
+  else if(contiguous && b===3 && a<=0 && a>-3)  terms=segs.filter(s=>s.b<=0).map(t).concat([{t:"50%",v:50}]);
+  else terms=segs.map(t);
+  const total=Math.round(terms.reduce((s,x)=>s+x.v,0)*100)/100;
+  return {segs, contiguous, a, b, terms, total};
+}
+
+/* ---------- symmetric screen ---------- */
+const symZ = () => invPhi(1 - S.symP/100);
+function symSolve(){
+  const g=S.symGiven, r={ok:false, warn:""};
+  const n=["a","m","b"].filter(k=>g[k]!==null).length;
+  if(n<2) return r;
+  let a=g.a, m=g.m, b=g.b;
+  if(a!==null && b!==null){ r.kind="ab"; if(m===null) m=(a+b)/2; else if(!near(m,(a+b)/2)) r.warn="שלושת הערכים לא סימטריים — הממוצע צריך להיות בדיוק באמצע."; }
+  else if(m!==null && a!==null){ r.kind="ma"; b=2*m-a; }
+  else { r.kind="mb"; a=2*m-b; }
+  if(!(b>a)){ r.warn="הערך הימני צריך להיות גדול מהשמאלי."; return r; }
+  return Object.assign(r,{ok:true,a,m,b});
+}
+let SYM={ok:false};
+function symRegions(){
+  const zp=symZ(), p=S.symP;
+  return [
+    {key:"L",  a:-ZMAX, b:-zp, pct:p},
+    {key:"ML", a:-zp,   b:0,   pct:50-p},
+    {key:"MR", a:0,     b:zp,  pct:50-p},
+    {key:"R",  a:zp,    b:ZMAX, pct:p}
+  ];
+}
+function symSelInfo(){
+  const rs=symRegions(), order=["L","ML","MR","R"];
+  const idx=order.filter(k=>S.symSel.has(k)).map(k=>order.indexOf(k));
+  if(!idx.length) return null;
+  const contiguous = idx.every((v,i)=>i===0||v===idx[i-1]+1);
+  const segs=idx.map(i=>rs[i]);
+  const total=Math.round(segs.reduce((s,x)=>s+x.pct,0)*100)/100;
+  return {segs, idx, contiguous, terms:segs.map(s=>({t:pct(s.pct),v:s.pct})), total};
+}
+
+/* ---------- drawing helpers ---------- */
+function label(x,y,txt,o={}){
+  const {size=20,fill="var(--ink)",weight=500,anchor="middle",dir="ltr"}=o;
+  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="${anchor}" style="direction:${dir};unicode-bidi:embed" dominant-baseline="middle" pointer-events="none">${o.html||esc(txt)}</text>`;
+}
+function bubble(bx,by,tx,ty,txt,sel){
+  const fill=sel?"var(--accent-fill)":"var(--surface)", dx=(tx-bx)>0?10:-10;
+  return `<g pointer-events="none">
+    <path d="M${bx-dx*0.2},${by+14} L${tx},${ty} L${bx+dx*1.4},${by+12} Z" fill="${fill}" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>
+    <ellipse cx="${bx}" cy="${by}" rx="40" ry="21" fill="${fill}" stroke="var(--ink)" stroke-width="1.5"/>
+    <path d="M${bx-dx*0.2-3},${by+13} L${bx+dx*1.4+3},${by+11}" stroke="${fill}" stroke-width="5"/></g>`+
+    label(bx, by+1, txt, {size:19, fill:sel?"var(--accent-ink)":"var(--ink)", weight:sel?700:500});
+}
+function segLabel(s, sel){
+  const c=(s.a+s.b)/2, fill=sel?"var(--accent-ink)":"var(--ink)", weight=sel?700:500;
+  if(s.pct>=3){ const h=BASE-zy(c); return label(zx(c), BASE-Math.min(h*0.52,200), pct(s.pct), {size:24,fill,weight}); }
+  const sg=Math.sign(c), far=Math.abs(c)>2.5;
+  return bubble(zx(sg*(far?3.28:2.42)), BASE-(far?62:96), zx(c), far?BASE-4:BASE-(BASE-zy(c))*0.45, pct(s.pct), sel);
+}
+function curvePath(){ let d=""; for(let s=0;s<=400;s++){ const z=-ZMAX+2*ZMAX*s/400; d+=(s?"L":"M")+zx(z).toFixed(1)+","+zy(z).toFixed(1); } return d; }
+function axis(ticks){
+  let g=`<line x1="${X0-25}" y1="${BASE}" x2="${X1+12}" y2="${BASE}" stroke="var(--ink)" stroke-width="2"/>`;
+  g+=`<path d="M${X1+24},${BASE} l-14,-6 l0,12 Z" fill="var(--ink)"/>`+label(X1+34, BASE, "x", {size:20});
+  for(const z of ticks) g+=`<line x1="${zx(z)}" y1="${BASE}" x2="${zx(z)}" y2="${BASE+11}" stroke="var(--ink)" stroke-width="2"/>`;
+  return g;
+}
+function topMarker(z, txt){
+  const x=zx(z), w=Math.max(70, txt.length*10.5+22);
+  return `<line x1="${x}" y1="${BASE}" x2="${x}" y2="72" stroke="var(--accent)" stroke-width="3" pointer-events="none"/>`+
+    `<rect x="${x-w/2}" y="44" width="${w}" height="30" rx="8" fill="var(--accent)" pointer-events="none"/>`+
+    label(x, 60, txt, {size:18, weight:700, fill:"#1b1300"});
+}
+function dotMarker(z, txt){
+  const x=zx(z), y=zy(z);
+  return `<g pointer-events="none"><line x1="${x}" y1="${BASE}" x2="${x}" y2="${y}" stroke="var(--mu)" stroke-width="3" stroke-dasharray="6 4"/>`+
+    `<circle cx="${x}" cy="${y}" r="9" fill="var(--mu)" stroke="var(--surface)" stroke-width="3"/>`+
+    `<rect x="${x-62}" y="${y-52}" width="124" height="32" rx="8" fill="var(--mu)"/></g>`+
+    label(x, y-36, txt, {size:18, weight:700, fill:"#fff"});
+}
+
+/* ---------- render: table screen ---------- */
+function renderTable(){
+  let g="";
+  const info=selInfo();
+  for(const s of segments())
+    g+=`<path d="${areaPath(s.a,s.b)}" fill="${S.sel.has(s.key)?"var(--accent-fill)":`var(--seg${Math.min(Math.floor(s.i/1.5),3)})`}"/>`;
+  for(let k=-6;k<=6;k++){ if(k===0) continue; const z=k/2;
+    g+=`<line x1="${zx(z)}" y1="${BASE}" x2="${zx(z)}" y2="${zy(z)}" stroke="var(--ink)" stroke-width="1.4" opacity=".7"/>`; }
+  if(S.showPct) for(const s of segments()) g+=segLabel(s, S.sel.has(s.key));
+  g+=axis([...Array(13)].map((_,i)=>(i-6)/2));
+  g+=`<path d="${curvePath()}" fill="none" stroke="var(--curve)" stroke-width="4" stroke-linejoin="round"/>`;
+  g+=`<line x1="${zx(0)}" y1="${BASE}" x2="${zx(0)}" y2="${zy(0)}" stroke="var(--mu)" stroke-width="3"/>`;
+  if(info && info.contiguous){
+    // SVG text is laid out left-to-right, so the unit goes first to read correctly in Hebrew
+    const tv = z => SOL.ok ? (S.unit? S.unit+" " : "")+fmt(valAt(z)) : "z = "+fmt(z);
+    if(info.a>-3) g+=topMarker(info.a, tv(info.a));
+    if(info.b<3)  g+=topMarker(info.b, tv(info.b));
+  }
+  const cm=calcMarker(); if(cm) g+=cm;
+  if(info && S.showPct) g+=label(X0+6, 30, pct(info.total), {size:38, weight:700, fill:"var(--accent-ink)", anchor:"start"});
+  return g;
+}
+
+/* ---------- render: symmetric screen ---------- */
+function renderSym(){
+  let g="";
+  const rs=symRegions(), zp=symZ();
+  rs.forEach((r,i)=>{ const sel=S.symSel.has(r.key);
+    g+=`<path d="${areaPath(r.a,r.b)}" fill="${sel?"var(--accent-fill)":(i===0||i===3?"var(--seg2)":"var(--seg0)")}"/>`; });
+  for(const z of [-zp,zp]) g+=`<line x1="${zx(z)}" y1="${BASE}" x2="${zx(z)}" y2="${zy(z)}" stroke="var(--ink)" stroke-width="2.5"/>`;
+  if(S.showPct){
+    rs.forEach(r=>{
+      const sel=S.symSel.has(r.key), fill=sel?"var(--accent-ink)":"var(--ink)", weight=sel?700:500;
+      if(r.key==="ML"||r.key==="MR"){
+        const c=(r.a+r.b)/2, h=BASE-zy(c);
+        if(zp>0.35) g+=label(zx(c), BASE-Math.min(h*0.5,190), pct(r.pct), {size:Math.min(26,(zx(zp)-zx(0))/2.3),fill,weight});
+        else g+=bubble(zx(r.key==="ML"?-0.9:0.9), 50, zx(c), BASE-h*0.6, pct(r.pct), sel);
+      } else {
+        const sg=r.key==="R"?1:-1, c=sg*(zp+0.4), h=BASE-zy(c);
+        if(h>70 && zp+0.8<ZMAX) g+=label(zx(c), BASE-h*0.4, pct(r.pct), {size:24,fill,weight});
+        else g+=bubble(zx(sg*Math.min(zp+1.1,3.2)), Math.min(zy(zp+0.6)-40, BASE-70), zx(c), BASE-Math.max(4,h*0.4), pct(r.pct), sel);
+      }
+    });
+  }
+  g+=axis([-zp,0,zp]);
+  g+=`<path d="${curvePath()}" fill="none" stroke="var(--curve)" stroke-width="4" stroke-linejoin="round"/>`;
+  g+=`<line x1="${zx(0)}" y1="${BASE}" x2="${zx(0)}" y2="${zy(0)}" stroke="var(--mu)" stroke-width="3"/>`;
+  const info=symSelInfo();
+  if(info && S.showPct) g+=label(X0+6, 30, pct(info.total), {size:38, weight:700, fill:"var(--accent-ink)", anchor:"start"});
+  return g;
+}
+
+function render(){
+  $("chart").innerHTML = S.screen==="table" ? renderTable() : renderSym();
+}
+
+/* ---------- rows under the chart ---------- */
+const xInputs=[], zCells=[], bCells=[], aCells=[];
+function cellInput(onVal){
+  const inp=document.createElement("input");
+  inp.className="cell"; inp.type="text"; inp.inputMode="decimal"; inp.placeholder="?";
+  inp.addEventListener("input",()=>{ const v=parseNum(inp.value); if(Number.isNaN(v)) return; onVal(v); update(inp); });
+  inp.addEventListener("blur",()=>update());
+  return inp;
+}
+function buildRows(){
+  for(let k=-6;k<=6;k++){
+    const left=(zx(k/2)/10)+"%";
+    const inp=cellInput(v=>{ if(v===null) S.given.delete(k); else S.given.set(k,v); });
+    inp.style.left=left; inp.dataset.k=k; inp.setAttribute("aria-label","ערך בנקודה z="+(k/2));
+    inp.addEventListener("focus",()=>{ S.focusK=k; updatePanel(); });
+    $("xrow").appendChild(inp); xInputs.push(inp);
+    const mk=(row,txt,arr)=>{ const c=document.createElement("span"); c.className="cell"; c.style.left=left; c.textContent=txt; $(row).appendChild(c); arr.push(c); };
+    mk("zrow", fmt(k/2), zCells);
+    mk("brow", pct(CUM[k+6]), bCells);
+    mk("arow", pct(100-CUM[k+6]), aCells);
+  }
+  for(const key of ["a","m","b"]){
+    const inp=cellInput(v=>{ S.symGiven[key]=v; });
+    inp.dataset.key=key; inp.setAttribute("aria-label", key==="m"?"ממוצע":key==="a"?"ערך בקו השמאלי":"ערך בקו הימני");
+    $("symrow").appendChild(inp);
+  }
+}
+function updateRows(skip){
+  xInputs.forEach(inp=>{
+    const k=+inp.dataset.k, given=S.given.has(k);
+    inp.classList.toggle("given",given);
+    if(inp===skip || inp===document.activeElement) return;
+    inp.value = given ? plain(S.given.get(k)) : (SOL.ok && S.showComp ? fmt(valAt(k/2)) : "");
+  });
+  $("zrow").hidden=!S.rowZ; $("brow").hidden=!S.rowB; $("arow").hidden=!S.rowA;
+  // symmetric row: positions follow the lines, pushed apart when they are close
+  const zp=symZ();
+  let L=zx(-zp), M=zx(0), R=zx(zp); const gap=66;
+  if(M-L<gap){ L=M-gap; R=M+gap; }
+  const pos={a:L,m:M,b:R};
+  $("symrow").querySelectorAll("input").forEach(inp=>{
+    const key=inp.dataset.key, given=S.symGiven[key]!==null;
+    inp.style.left=(pos[key]/10)+"%";
+    inp.classList.toggle("given",given);
+    if(inp===skip || inp===document.activeElement) return;
+    inp.value = given ? plain(S.symGiven[key]) : (SYM.ok && S.showComp ? fmt(SYM[key]) : "");
+  });
+}
+
+/* ---------- z formula calculator ---------- */
+const CALC_IDS={z:"cz",x:"cx",m:"cm",s:"cs"};
+let CALC={done:false};
+function calcRead(){ const o={}; for(const k in CALC_IDS) o[k]=parseNum($(CALC_IDS[k]).value); return o; }
+function calcSolve(){
+  const v=calcRead(), keys=Object.keys(CALC_IDS);
+  const missing=keys.filter(k=>v[k]===null);
+  const res={done:false, html:"", missing:null, vals:v};
+  for(const k in CALC_IDS) $(CALC_IDS[k]).classList.remove("solved","filled");
+  keys.forEach(k=>{ if(v[k]!==null) $(CALC_IDS[k]).classList.add("filled"); $(CALC_IDS[k]).placeholder={z:"z",x:"x",m:"x̄",s:"S"}[k]; });
+  if(keys.some(k=>Number.isNaN(v[k]))){ res.html=`<p class="warn">אחד המספרים לא תקין.</p>`; return res; }
+  if(missing.length>1){ res.html=`<p class="muted" style="text-align:center">חסרים עוד ${missing.length-1===1?"נתון אחד":(missing.length-1)+" נתונים"}.</p>`; return res; }
+  const {z,x,m,s}=v; let h="", out;
+  if(missing.length===0){
+    if(s===0){ res.html=`<p class="warn">סטיית התקן לא יכולה להיות 0.</p>`; return res; }
+    const zr=(x-m)/s;
+    h+=step(`z = ${fr(fmt(x)+" "+MINUS+" "+par(m), fmt(s))} = ${fr(fmt(x-m), fmt(s))} = <b>${fmt(zr)}</b>`);
+    h+= near(zr,z) ? `<p class="ok" style="text-align:center">✓ הנתונים מתאימים לנוסחה</p>` : `<p class="warn" style="text-align:center">לפי הנוסחה z = ${fmt(zr)} ולא ${fmt(z)}.</p>`;
+    res.html=h; res.done=near(zr,z); res.z=zr; res.vals={z:zr,x,m,s}; return res;
+  }
+  const miss=missing[0];
+  if(miss==="z"){
+    if(s===0){ res.html=`<p class="warn">סטיית התקן לא יכולה להיות 0.</p>`; return res; }
+    out=(x-m)/s;
+    h+=heb("מציבים בנוסחה:");
+    h+=step(`z = ${fr(fmt(x)+" "+MINUS+" "+par(m), fmt(s))}`);
+    h+=heb("מחשבים את המונה:");
+    h+=step(`z = ${fr(fmt(x-m), fmt(s))}`);
+    h+=heb("מחלקים:");
+    h+=step(`z = <b>${fmt(out)}</b>`);
+    res.vals={z:out,x,m,s};
+  }
+  if(miss==="x"){
+    if(s===0){ res.html=`<p class="warn">סטיית התקן לא יכולה להיות 0.</p>`; return res; }
+    out=z*s+m;
+    h+=heb("מציבים בנוסחה:");
+    h+=step(`${fmt(z)} = ${fr("x "+MINUS+" "+par(m), fmt(s))}`);
+    h+=heb(`כופלים את שני האגפים ב־<span class="math">${fmt(s)}</span>:`);
+    h+=step(`${par(z)} · ${fmt(s)} = x ${MINUS} ${par(m)}`);
+    h+=step(`${fmt(z*s)} = x ${MINUS} ${par(m)}`);
+    h+=heb(`מוסיפים <span class="math">${par(m)}</span> לשני האגפים:`);
+    h+=step(`x = ${fmt(z*s)} + ${par(m)} = <b>${fmt(out)}</b>`);
+    res.vals={z,x:out,m,s};
+  }
+  if(miss==="m"){
+    if(s===0){ res.html=`<p class="warn">סטיית התקן לא יכולה להיות 0.</p>`; return res; }
+    out=x-z*s;
+    h+=heb("מציבים בנוסחה:");
+    h+=step(`${fmt(z)} = ${fr(fmt(x)+" "+MINUS+" "+XB, fmt(s))}`);
+    h+=heb(`כופלים את שני האגפים ב־<span class="math">${fmt(s)}</span>:`);
+    h+=step(`${par(z)} · ${fmt(s)} = ${fmt(x)} ${MINUS} ${XB}`);
+    h+=step(`${fmt(z*s)} = ${fmt(x)} ${MINUS} ${XB}`);
+    h+=heb("מבודדים את הממוצע:");
+    h+=step(`${XB} = ${fmt(x)} ${MINUS} ${par(z*s)} = <b>${fmt(out)}</b>`);
+    res.vals={z,x,m:out,s};
+  }
+  if(miss==="s"){
+    if(z===0){ res.html=`<p class="warn">כש־z = 0 הערך שווה לממוצע, ואי אפשר למצוא ממנו את סטיית התקן.</p>`; return res; }
+    out=(x-m)/z;
+    h+=heb("מציבים בנוסחה:");
+    h+=step(`${fmt(z)} = ${fr(fmt(x)+" "+MINUS+" "+par(m), "S")}`);
+    h+=heb("מחשבים את המונה:");
+    h+=step(`${fmt(z)} = ${fr(fmt(x-m), "S")}`);
+    h+=heb("כופלים את שני האגפים ב־S:");
+    h+=step(`${par(z)} · S = ${fmt(x-m)}`);
+    h+=heb(`מחלקים ב־<span class="math">${par(z)}</span>:`);
+    h+=step(`S = ${fr(fmt(x-m), fmt(z))} = <b>${fmt(out)}</b>`);
+    if(!(out>0)) h+=`<p class="warn">סטיית תקן חייבת להיות חיובית — כדאי לבדוק את הסימן של z.</p>`;
+    res.vals={z,x,m,s:out};
+  }
+  const el=$(CALC_IDS[miss]); el.classList.add("solved"); el.placeholder=fmt(out);
+  res.html=h; res.done=true; res.z=res.vals.z; return res;
+}
+function calcMarker(){
+  if(!CALC.done || S.screen!=="table") return "";
+  const {z,x,m,s}=CALC.vals;
+  if(!(s>0) || Math.abs(z)>3.5) return "";
+  if(SOL.ok && !(near(m,SOL.mean) && near(s,SOL.sigma))) return "";
+  return dotMarker(z, "x = "+fmt(x));
+}
+
+/* ---------- magic square ---------- */
+function squareSolve(){
+  const N=parseNum($("sN").value), P=parseNum($("sP").value), K=parseNum($("sK").value);
+  ["q100","qN","qP","qK"].forEach(id=>$(id).classList.remove("diag","unknown","divc"));
+  ["sN","sP","sK"].forEach(id=>{ $(id).classList.remove("solved"); $(id).placeholder=""; });
+  const vals={N,P,K}, miss=Object.keys(vals).filter(k=>vals[k]===null);
+  if([N,P,K].some(Number.isNaN)) return `<p class="warn">אחד המספרים לא תקין.</p>`;
+  if(miss.length>1) return `<p class="muted" style="text-align:center">חסר עוד נתון.</p>`;
+  let h="";
+  const cls=(ids,c)=>ids.forEach(id=>$(id).classList.add(c));
+  const intNote = v => (Math.abs(v-Math.round(v))>1e-9) ? heb(`בכמות של אנשים מעגלים: <span class="math">≈ ${Math.round(v)}</span>`) : "";
+  if(miss.length===0){
+    if(N===0) return `<p class="warn">הכמות הכוללת לא יכולה להיות 0.</p>`;
+    const k=N*P/100;
+    return step(`${fmt(N)} · ${fmt(P)} ÷ 100 = ${fmt(k)}`) + (near(k,K)?`<p class="ok" style="text-align:center">✓ הריבוע נכון</p>`:`<p class="warn" style="text-align:center">לפי הריבוע הכמות היא ${fmt(k)} ולא ${fmt(K)}.</p>`);
+  }
+  const m=miss[0];
+  if(m==="K"){
+    const out=N*P/100;
+    cls(["qN","qP"],"diag"); cls(["q100"],"divc"); cls(["qK"],"unknown");
+    $("sK").classList.add("solved"); $("sK").placeholder=fmt(out);
+    h+=heb("כופלים באלכסון ומשווים:");
+    h+=step(`100 · ? = ${fmt(N)} · ${fmt(P)}`);
+    h+=heb("מחלקים ב־100:");
+    h+=step(`? = ${fr(fmt(N)+" · "+fmt(P), "100")} = ${fr(fmt(N*P),"100")} = <b>${fmt(out)}</b>`);
+    h+=intNote(out);
+  }
+  if(m==="P"){
+    if(N===0) return `<p class="warn">הכמות הכוללת לא יכולה להיות 0.</p>`;
+    const out=100*K/N;
+    cls(["q100","qK"],"diag"); cls(["qN"],"divc"); cls(["qP"],"unknown");
+    $("sP").classList.add("solved"); $("sP").placeholder=fmt(out);
+    h+=heb("כופלים באלכסון ומשווים:");
+    h+=step(`${fmt(N)} · ? = 100 · ${fmt(K)}`);
+    h+=heb(`מחלקים ב־<span class="math">${fmt(N)}</span>:`);
+    h+=step(`? = ${fr("100 · "+fmt(K), fmt(N))} = ${fr(fmt(100*K), fmt(N))} = <b>${fmt(out)}%</b>`);
+  }
+  if(m==="N"){
+    if(P===0) return `<p class="warn">האחוז לא יכול להיות 0.</p>`;
+    const out=100*K/P;
+    cls(["q100","qK"],"diag"); cls(["qP"],"divc"); cls(["qN"],"unknown");
+    $("sN").classList.add("solved"); $("sN").placeholder=fmt(out);
+    h+=heb("כופלים באלכסון ומשווים:");
+    h+=step(`${fmt(P)} · ? = 100 · ${fmt(K)}`);
+    h+=heb(`מחלקים ב־<span class="math">${fmt(P)}</span>:`);
+    h+=step(`? = ${fr("100 · "+fmt(K), fmt(P))} = ${fr(fmt(100*K), fmt(P))} = <b>${fmt(out)}</b>`);
+    h+=intNote(out);
+  }
+  return h;
+}
+
+/* ---------- solution text (table screen) ---------- */
+function fromTable(p){
+  return heb(`${pct(CUM[p.k+6])} מתחת ל־${fmt(p.v)}${u()} ← מהגרף: <span class="math">z = ${fmt(p.z)}</span>`);
+}
+function solutionTable(){
+  const R=SOL; let h="";
+  if(R.kind==="missing"){
+    return heb("חסרים נתונים. אפשר לתת אחד מאלה:")+
+      `<ul class="facts muted"><li>ממוצע וסטיית תקן</li><li>ערך אחד (באחד הקווים) וסטיית תקן</li><li>שני ערכים בשני קווים</li></ul>`;
+  }
+  if(R.kind==="meanS"){
+    const k = S.focusK!==0 ? S.focusK : 2, z=k/2;
+    h+=heb(`נתון: <span class="math">${XB} = ${fmt(R.mean)}</span>, <span class="math">S = ${fmt(R.sigma)}</span>`);
+    h+=heb(`הערך בקו שבו <span class="math">z = ${fmt(z)}</span>:`);
+    h+=step(`${fr("x "+MINUS+" "+fmt(R.mean), fmt(R.sigma))} = ${fmt(z)}`);
+    h+=step(`x = ${fmt(R.mean)} + ${par(z)}·${fmt(R.sigma)} = <b>${fmt(valAt(z))}</b>`);
+    h+=heb(`לחצו על תיבה אחרת מתחת לגרף כדי לראות את החישוב שלה.`);
+  }
+  if(R.kind==="oneS"){
+    const p=R.p;
+    h+=fromTable(p);
+    h+=heb(`נתון: <span class="math">S = ${fmt(R.sigma)}</span>. מציבים בנוסחה:`);
+    h+=step(`${fr(fmt(p.v)+" "+MINUS+" "+XB, fmt(R.sigma))} = ${fmt(p.z)}`);
+    h+=step(`${fmt(p.v)} ${MINUS} ${XB} = ${par(p.z)}·${fmt(R.sigma)} = ${fmt(p.z*R.sigma)}`);
+    h+=step(`${XB} = <b>${fmt(R.mean)}</b>`);
+  }
+  if(R.kind==="two"){
+    const {p1,p2}=R;
+    h+=fromTable(p1)+fromTable(p2);
+    if(!R.ok) return h+`<p class="warn">${R.warn}</p>`;
+    h+=heb("שתי משוואות:");
+    h+=step(`${fr(fmt(p1.v)+" "+MINUS+" "+XB,"S")} = ${fmt(p1.z)} &nbsp;→&nbsp; ${fmt(p1.v)} ${MINUS} ${XB} = ${par(p1.z)}·S`);
+    h+=step(`${fr(fmt(p2.v)+" "+MINUS+" "+XB,"S")} = ${fmt(p2.z)} &nbsp;→&nbsp; ${fmt(p2.v)} ${MINUS} ${XB} = ${par(p2.z)}·S`);
+    h+=heb("מחסרים את המשוואות:");
+    h+=step(`${fmt(p2.v)} ${MINUS} ${par(p1.v)} = (${fmt(p2.z)} ${MINUS} ${par(p1.z)})·S`);
+    h+=step(`${fmt(p2.v-p1.v)} = ${fmt(p2.z-p1.z)}·S &nbsp;→&nbsp; S = <b>${fmt(R.sigma)}</b>`);
+    h+=heb("מציבים במשוואה הראשונה:");
+    h+=step(`${XB} = ${fmt(p1.v)} ${MINUS} ${par(p1.z)}·${fmt(R.sigma)} = <b>${fmt(R.mean)}</b>`);
+  }
+  if(R.warn) h+=`<p class="warn">${R.warn}</p>`;
+  return h;
+}
+function solutionSym(){
+  const R=SYM, p=S.symP; let h="";
+  if(!R.ok){
+    h+=heb(`בכל קצה יש ${pct(p)}, ובאמצע ${pct(100-2*p)} — חצי מכל צד של הממוצע: ${pct(50-p)}.`);
+    h+=heb("כתבו שניים מהערכים (קו שמאלי, ממוצע, קו ימני) מתחת לגרף.");
+    if(R.warn) h+=`<p class="warn">${R.warn}</p>`;
+    return h;
+  }
+  const {a,m,b}=R;
+  h+=heb(`${pct(p)} מתחת ל־${fmt(a)}${u()} ו־${pct(p)} מעל ${fmt(b)}${u()}.`);
+  if(R.kind==="ab"){
+    h+=heb("ההתפלגות סימטרית, ולכן הממוצע בדיוק באמצע בין שני הקווים:");
+    h+=step(`${XB} = ${fr(fmt(a)+" + "+fmt(b), "2")} = ${fr(fmt(a+b),"2")} = <b>${fmt(m)}</b>`);
+  } else if(R.kind==="ma"){
+    h+=heb("המרחק מהממוצע לקו השמאלי:");
+    h+=step(`${fmt(m)} ${MINUS} ${par(a)} = ${fmt(m-a)}`);
+    h+=heb("מהסימטריה, הקו הימני נמצא באותו מרחק מעל הממוצע:");
+    h+=step(`${fmt(m)} + ${fmt(m-a)} = <b>${fmt(b)}</b>`);
+  } else {
+    h+=heb("המרחק מהממוצע לקו הימני:");
+    h+=step(`${fmt(b)} ${MINUS} ${par(m)} = ${fmt(b-m)}`);
+    h+=heb("מהסימטריה, הקו השמאלי נמצא באותו מרחק מתחת לממוצע:");
+    h+=step(`${fmt(m)} ${MINUS} ${fmt(b-m)} = <b>${fmt(a)}</b>`);
+  }
+  h+=heb(`בין ${fmt(a)} ל־${fmt(b)}:`);
+  h+=step(`100% ${MINUS} ${pct(p)} ${MINUS} ${pct(p)} = <b>${pct(100-2*p)}</b>`);
+  h+=heb(`בין ${fmt(a)} לממוצע (וגם בין הממוצע ל־${fmt(b)}):`);
+  h+=step(`50% ${MINUS} ${pct(p)} = <b>${pct(50-p)}</b>`);
+  if(R.warn) h+=`<p class="warn">${R.warn}</p>`;
+  return h;
+}
+
+/* ---------- selection panel ---------- */
+function selectionPanel(){
+  const L = (S.screen==="sym" ? S.symLabel : S.label) || "ערך";
+  let q="", zline="", brk="", sum="";
+  if(S.screen==="table"){
+    const info=selInfo();
+    if(info){
+      const v = z => SOL.ok ? fmt(valAt(z))+u() : "z = "+fmt(z);
+      if(info.contiguous){
+        if(info.a===-3 && info.b===3) q=`כל השטח מתחת לעקומה.`;
+        else if(info.a===-3) q=`כמה אחוזים עם ${L} מתחת ל־${v(info.b)}?`;
+        else if(info.b===3)  q=`כמה אחוזים עם ${L} מעל ${v(info.a)}?`;
+        else q=`כמה אחוזים עם ${L} בין ${v(info.a)} ל־${v(info.b)}?`;
+        if(SOL.ok){
+          const zf = z => `<span>z = ${fr(fmt(valAt(z))+" "+MINUS+" "+fmt(SOL.mean), fmt(SOL.sigma))} = ${fmt(z)}</span>`;
+          zline=[info.a,info.b].filter(z=>z>-3&&z<3).map(zf).join("&nbsp;&nbsp;&nbsp;");
+        }
+      } else q="כמה אזורים נפרדים מסומנים:";
+      brk = info.terms.length>1 ? info.terms.map(t=>t.t).join(" + ")+" = "+pct(info.total) : "";
+      sum = pct(info.total);
+    }
+  } else {
+    const info=symSelInfo();
+    if(info){
+      const v = key => SYM.ok ? fmt(SYM[key])+u() : (key==="m"?"הממוצע":key==="a"?"הקו השמאלי":"הקו הימני");
+      if(info.contiguous){
+        const pts=["a","m","b"], lo=info.idx[0], hi=info.idx[info.idx.length-1];
+        const left = lo===0 ? null : pts[lo-1], right = hi===3 ? null : pts[hi];
+        if(!left && !right) q="כל השטח מתחת לעקומה.";
+        else if(!left) q=`כמה אחוזים עם ${L} מתחת ל־${v(right)}?`;
+        else if(!right) q=`כמה אחוזים עם ${L} מעל ${v(left)}?`;
+        else q=`כמה אחוזים עם ${L} בין ${v(left)} ל־${v(right)}?`;
+      } else q="כמה אזורים נפרדים מסומנים:";
+      brk = info.terms.length>1 ? info.terms.map(t=>t.t).join(" + ")+" = "+pct(info.total) : "";
+      sum = pct(info.total);
+    }
+  }
+  $("selHint").hidden=!!sum;
+  $("selQ").textContent=q; $("selZ").innerHTML=zline; $("selBreak").textContent=brk; $("selSum").textContent=sum;
+}
+function currentTotal(){
+  const info = S.screen==="table" ? selInfo() : symSelInfo();
+  return info ? info.total : null;
+}
+
+/* ---------- panel ---------- */
+function updatePanel(){
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.screen===S.screen));
+  document.querySelectorAll("[data-for]").forEach(el=>el.hidden = el.dataset.for!==S.screen);
+  $("sol").innerHTML = S.screen==="table" ? solutionTable() : solutionSym();
+  if(document.activeElement!==$("inMean")){
+    $("inMean").value = S.given.has(0) ? plain(S.given.get(0)) : "";
+    $("inMean").placeholder = (!S.given.has(0) && SOL.ok) ? "מחושב: "+fmt(SOL.mean) : "";
+  }
+  if(document.activeElement!==$("inS")){
+    $("inS").value = S.Sgiven>0 ? S.Sgiven : "";
+    $("inS").placeholder = (SOL.ok && !(S.Sgiven>0)) ? "מחושב: "+fmt(SOL.sigma) : "";
+  }
+  if(document.activeElement!==$("symP")) $("symP").value=S.symP;
+  $("symRange").value=S.symP;
+  selectionPanel();
+  $("cSteps").innerHTML=CALC.html||"";
+  $("sSteps").innerHTML=squareSolve();
+}
+
+function update(skipInput){
+  SOL=solve(); SYM=symSolve(); CALC=calcSolve();
+  render(); updateRows(skipInput); updatePanel();
+}
+
+/* ---------- inputs ---------- */
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{S.screen=b.dataset.screen; update();}));
+$("preset").addEventListener("change",e=>{
+  const p=PRESETS[+e.target.value]; if(!p) return;
+  S.label=p.label; S.unit=p.unit; S.Sgiven=p.S; S.given=new Map(p.given); S.focusK=2; S.sel.clear();
+  $("inLabel").value=S.label; $("inUnit").value=S.unit; update();
+});
+$("inLabel").addEventListener("input",e=>{S.label=e.target.value; update();});
+$("inUnit").addEventListener("input",e=>{S.unit=e.target.value; update();});
+$("inMean").addEventListener("input",e=>{ const v=parseNum(e.target.value);
+  if(v===null) S.given.delete(0); else if(!Number.isNaN(v)) S.given.set(0,v); else return; update(); });
+$("inS").addEventListener("input",e=>{ const v=parseNum(e.target.value);
+  if(v===null) S.Sgiven=0; else if(v>0) S.Sgiven=v; else return; update(); });
+["inMean","inS"].forEach(id=>$(id).addEventListener("blur",()=>update()));
+$("clearData").addEventListener("click",()=>{ S.given.clear(); S.Sgiven=0; $("preset").value=""; update(); });
+
+$("cPct").addEventListener("change",e=>{S.showPct=e.target.checked; update();});
+$("cComp").addEventListener("change",e=>{S.showComp=e.target.checked; update();});
+$("cZrow").addEventListener("change",e=>{S.rowZ=e.target.checked; update();});
+$("cBrow").addEventListener("change",e=>{S.rowB=e.target.checked; update();});
+$("cArow").addEventListener("change",e=>{S.rowA=e.target.checked; update();});
+$("selClear").addEventListener("click",()=>{ (S.screen==="table"?S.sel:S.symSel).clear(); update(); });
+
+/* symmetric screen */
+function setP(v){ if(!(v>=1 && v<=49)) return; S.symP=v; S.symSel.clear(); update(); }
+$("symP").addEventListener("input",e=>{ const v=parseNum(e.target.value); if(v!==null && !Number.isNaN(v)) setP(v); });
+$("symP").addEventListener("blur",()=>update());
+$("symRange").addEventListener("input",e=>setP(+e.target.value));
+document.querySelectorAll("[data-p]").forEach(b=>b.addEventListener("click",()=>setP(+b.dataset.p)));
+$("symLabel").addEventListener("input",e=>{S.symLabel=e.target.value; update();});
+$("symUnit").addEventListener("input",e=>{S.symUnit=e.target.value; update();});
+$("symClear").addEventListener("click",()=>{ S.symGiven={a:null,m:null,b:null}; update(); });
+
+/* z formula */
+Object.values(CALC_IDS).forEach(id=>$(id).addEventListener("input",()=>update()));
+$("cFill").addEventListener("click",()=>{
+  if(!SOL.ok) return;
+  $("cm").value=plain(SOL.mean); $("cs").value=plain(SOL.sigma); update();
+});
+$("cClear").addEventListener("click",()=>{ Object.values(CALC_IDS).forEach(id=>$(id).value=""); update(); });
+
+/* magic square */
+["sN","sP","sK"].forEach(id=>$(id).addEventListener("input",()=>updatePanel()));
+$("sFromSel").addEventListener("click",()=>{ const t=currentTotal(); if(t===null) return; $("sP").value=t; updatePanel(); });
+$("sClear").addEventListener("click",()=>{ ["sN","sP","sK"].forEach(id=>$(id).value=""); updatePanel(); });
+
+/* ---------- chart interaction: click a region, or drag from a line to another line / the edge ---------- */
+const svg=$("chart");
+function evtZ(e){
+  const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  return (p.x-X0)/(X1-X0)*2*ZMAX-ZMAX;
+}
+// table screen: lines are -3..3 every 0.5 (dragging past ±3 reaches the edge)
+const snapT = z => Math.max(-3,Math.min(3,Math.round(z*2)/2));
+// sym screen: line index 0..4 = edge, left line, mean, right line, edge
+function snapS(z){ const zp=symZ(), pts=[-ZMAX,-zp,0,zp,ZMAX]; let best=0;
+  pts.forEach((p,i)=>{ if(Math.abs(z-p)<Math.abs(z-pts[best])) best=i; }); return best; }
+let drag=null;
+svg.addEventListener("pointerdown",e=>{
+  const z=evtZ(e);
+  drag={z0:z, start: S.screen==="table" ? snapT(z) : snapS(z), moved:false, before:new Set(S.screen==="table"?S.sel:S.symSel)};
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove",e=>{
+  if(!drag) return;
+  const z=evtZ(e);
+  if(S.screen==="table"){
+    const cur = z>3.2 ? 3 : z<-3.2 ? -3 : snapT(z);
+    if(cur===drag.start && !drag.moved) return;
+    drag.moved=true;
+    const a=Math.min(drag.start,cur), b=Math.max(drag.start,cur);
+    S.sel.clear(); for(const s of segments()) if(s.a>=a-1e-9 && s.b<=b+1e-9) S.sel.add(s.key);
+  } else {
+    const cur=snapS(z);
+    if(cur===drag.start && !drag.moved) return;
+    drag.moved=true;
+    const a=Math.min(drag.start,cur), b=Math.max(drag.start,cur), keys=["L","ML","MR","R"];
+    S.symSel.clear(); for(let i=a;i<b;i++) S.symSel.add(keys[i]);
+  }
+  update();
+});
+function endDrag(){
+  if(!drag) return;
+  if(!drag.moved){ // a click: toggle the region under the pointer
+    const z=drag.z0;
+    if(S.screen==="table"){
+      const s=segments().find(s=>z>=s.a && z<s.b);
+      if(s){ S.sel.has(s.key)?S.sel.delete(s.key):S.sel.add(s.key); }
+    } else {
+      const r=symRegions().find(r=>z>=r.a && z<r.b);
+      if(r){ S.symSel.has(r.key)?S.symSel.delete(r.key):S.symSel.add(r.key); }
+    }
+    update();
+  }
+  drag=null;
+}
+svg.addEventListener("pointerup",endDrag); svg.addEventListener("pointercancel",()=>{drag=null;});
+
+/* ---------- theme & fullscreen ---------- */
+$("themeBtn").addEventListener("click",()=>{
+  const root=document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+});
+$("fsBtn").addEventListener("click",()=>{
+  if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+});
+
+buildRows();
+$("inLabel").value=S.label; $("inUnit").value=S.unit;
+$("symLabel").value=S.symLabel; $("symUnit").value=S.symUnit;
+update();
+})();
+</script>
+</body>
+</html>
